@@ -1,0 +1,88 @@
+//本系统从12引脚接收二进制数据，从13引脚输出二进制数据，接收到的数据通过一个发光二极管（连11引脚）和一个光电二极管（连A0引脚）进行传输
+//本系统为单LED与单光电管收发信号传输
+#define ADpin A0
+#define led 11
+#define in 12
+#define out 13
+#define T 50
+#define FLAG 2
+
+int numdata;
+int count=0;
+int Total=0;
+int flag=0;
+double correct_rate=0;
+bool start=false;
+
+
+void setup() {
+   pinMode(led,OUTPUT);
+   pinMode(in,INPUT);
+   pinMode(out, OUTPUT);
+   pinMode(FLAG,INPUT);
+   Serial.begin(9600);
+}
+
+void loop() {
+    //读取数据
+    
+    numdata = digitalRead(in);
+    flag=digitalRead(FLAG);
+    //判断传输是否开始
+    if(flag==1)
+      start=true;
+    else start=false;
+    int V1,V2,V3;
+   if(start)
+   {
+    //数据传输
+    Serial.print(numdata);
+    if(numdata==1){
+      digitalWrite(led,LOW);
+      delay(1);
+      V1=analogRead(ADpin);
+      digitalWrite(led,HIGH);
+      delay(1);
+      V2=analogRead(ADpin);
+      digitalWrite(led,LOW);
+      delay(1);
+      V3=analogRead(ADpin);
+    }
+    if(numdata==0){
+      digitalWrite(led,HIGH);
+      delay(1);
+      V1=analogRead(ADpin);
+      digitalWrite(led,LOW);
+      delay(1);
+      V2=analogRead(ADpin);
+      digitalWrite(led,HIGH);
+      delay(1);
+      V3=analogRead(ADpin);
+    }
+    
+    //数据处理
+    if(2*V2>V1+V3){
+       digitalWrite(out, HIGH);
+       if(numdata==1)
+           count++;
+       Serial.print(V1);
+       Serial.print(V2);
+       Serial.print(V3);
+       Serial.println(1);          
+    }
+    else if(2*V2<=V1+V3){
+       digitalWrite(out, LOW);
+       if(numdata==0)
+           count++;
+       Serial.print(V1);
+       Serial.print(V2);
+       Serial.print(V3);
+       Serial.println(0);  
+    }
+    Total++;
+    correct_rate=count*1.0/Total;
+    Serial.print("Correct rate is ");
+    Serial.println(correct_rate);
+    delay(40);    
+   } 
+}
